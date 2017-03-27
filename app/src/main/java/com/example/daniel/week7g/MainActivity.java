@@ -1,5 +1,9 @@
 package com.example.daniel.week7g;
 
+import android.*;
+import android.app.Activity;
+import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -31,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private LocationRequest mLocationRequest;
     private LocationSettingsRequest mLocationSettingRequest;
     private TextView tvLat, tvLong;
+    private final int REQUEST_CHECK_SETTINGS = 123;
 
 
 
@@ -125,11 +130,37 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 break;
             case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                 Toast.makeText(this,"LocationSettingsStatusCodes.RESOLUTION_REQUIRED",Toast.LENGTH_LONG).show();
+                try {
+                    status.startResolutionForResult(MainActivity.this,REQUEST_CHECK_SETTINGS);
+                } catch (IntentSender.SendIntentException e) {
+                    e.printStackTrace();
+                }
                 break;
             case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                 Toast.makeText(this,"LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE",Toast.LENGTH_LONG).show();
                 break;
         }
 
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode,Intent data){
+        switch (requestCode){
+            case REQUEST_CHECK_SETTINGS:
+                switch (resultCode){
+                    case Activity.RESULT_OK:
+                        if(mGoogleApiClient.isConnected()){
+                            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                                Toast.makeText(this, "???", Toast.LENGTH_LONG).show();
+                                return;
+                            }
+                            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,mLocationRequest,this);
+                        }
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        Toast.makeText(this, "disabled??", Toast.LENGTH_LONG).show();
+                        break;
+                }
+                break;
+        }
     }
 }
